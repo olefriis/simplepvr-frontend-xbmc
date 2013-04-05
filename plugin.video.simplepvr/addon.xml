@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<addon id="plugin.video.simplepvr" version="0.0.1" name="SimplePVR" provider-name="Ole Friis [olefriis@gmail.com]">
+    <requires>
+        <import addon="xbmc.python" version="2.0"/>
+        <import addon="script.module.simplejson" version="2.0.10"/>
+    </requires>
+    <extension point="xbmc.python.pluginsource" library="addon.py">
+        <provides>video</provides>
+    </extension>
+    <extension point="xbmc.addon.metadata">
+        <summary lang="en">Watch your SimplePVR recordings</summary>
+        <description lang="en">SimplePVR is a PVR system without a player. Use XBMC to play your recordings and delete them when done.</description>
+        <license>Do What The Fuck You Want To Public License</license>
+        <platform>all</platform>
+        <language></language>
+    </extension>
+</addon>
