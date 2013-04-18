@@ -3,6 +3,7 @@ import urllib
 import urllib2
 import urlparse
 import base64
+import re
 import simplejson
 
 import xbmcaddon
@@ -65,7 +66,9 @@ class SimplePvr(object):
             }
             item.setInfo('video', infoLabels)
             item.addContextMenuItems([('Delete', 'XBMC.RunPlugin(' + PATH + '?' + self.urlencode({ 'operation': 'deleteRecording', 'showId': showId, 'episodeNumber': episodeNumber }) + ')',)])
-            items.append((episode['local_file_url'], item, False))
+            # TODO: Switch on new setting!
+            items.append((self.videoUrl(showId, episode['episode']), item, False))
+            #items.append((episode['local_file_url'], item, False))
 
         xbmcplugin.addDirectoryItems(HANDLE, items)
         xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_DATE)
@@ -112,14 +115,15 @@ class SimplePvr(object):
         except Exception, ex:
             raise SimplePvrException(ex)
 
+    def videoUrl(self, show, episode):
+        base = BASE_URL
+        if USER_NAME != '':
+            matches = re.search('(https?://)(.*)', BASE_URL)
+            base = matches.group(1) + USER_NAME + ':' + PASSWORD + '@' + matches.group(2)
+        return base + '/api/shows/' + urllib2.quote(show) + '/recordings/' + episode + '/stream.ts'
+
     def createRequest(self, url):
-        userName = ADDON.getSetting('backend.userName')
-        password = ADDON.getSetting('backend.password')
-        request = urllib2.Request(url)
-        if userName != '':
-            base64string = base64.encodestring('%s:%s' % (userName, password)).replace('\n', '')
-            request.add_header("Authorization", "Basic %s" % base64string)
-        return request
+        return urllib2.Request(url)
 
 
 if __name__ == '__main__':
@@ -128,6 +132,15 @@ if __name__ == '__main__':
     HANDLE = int(sys.argv[1])
     PARAMS = sys.argv[2]
     BASE_URL = ADDON.getSetting('backend.url')
+    USER_NAME = ADDON.getSetting('backend.userName')
+    PASSWORD = ADDON.getSetting('backend.password')
+
+    if USER_NAME != '':
+        password_manager = urllib2.HTTPPasswordMgrWithDefaultRealm()
+        password_manager.add_password(None, BASE_URL, USER_NAME, PASSWORD)
+        handler = urllib2.HTTPBasicAuthHandler(password_manager)
+        opener = urllib2.build_opener(handler)
+        urllib2.install_opener(opener)
 
     simplePvr = SimplePvr()
     try:
