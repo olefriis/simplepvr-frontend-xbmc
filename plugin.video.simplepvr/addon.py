@@ -66,9 +66,11 @@ class SimplePvr(object):
             }
             item.setInfo('video', infoLabels)
             item.addContextMenuItems([('Delete', 'XBMC.RunPlugin(' + PATH + '?' + self.urlencode({ 'operation': 'deleteRecording', 'showId': showId, 'episodeNumber': episodeNumber }) + ')',)])
-            # TODO: Switch on new setting!
-            items.append((self.videoUrl(showId, episode['episode']), item, False))
-            #items.append((episode['local_file_url'], item, False))
+
+            if SAME_MACHINE == 'true':
+                items.append((episode['local_file_url'], item, False))
+            else:
+                items.append((self.videoUrl(showId, episode['episode']), item, False))
 
         xbmcplugin.addDirectoryItems(HANDLE, items)
         xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_DATE)
@@ -134,6 +136,7 @@ if __name__ == '__main__':
     BASE_URL = ADDON.getSetting('backend.url')
     USER_NAME = ADDON.getSetting('backend.userName')
     PASSWORD = ADDON.getSetting('backend.password')
+    SAME_MACHINE = ADDON.getSetting('backend.sameMachine')
 
     if USER_NAME != '':
         password_manager = urllib2.HTTPPasswordMgrWithDefaultRealm()

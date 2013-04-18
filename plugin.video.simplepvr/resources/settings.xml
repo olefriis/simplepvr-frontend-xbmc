@@ -4,6 +4,7 @@
         <setting id="backend.url" label="30001" type="text" default="http://localhost:4567" />
         <setting id="backend.userName" label="30002" type="text" default="" />
         <setting id="backend.password" label="30003" type="text" option="hidden" default="" />
+        <setting id="backend.sameMachine" label="30004" type="bool" default="false" />
 	</category>
 </settings>
 

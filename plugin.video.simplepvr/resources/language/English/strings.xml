@@ -4,4 +4,5 @@
     <string id="30001">URL</string>
     <string id="30002">User name</string>
     <string id="30003">Password</string>
+    <string id="30004">Backend runs on this machine</string>
 </strings>
