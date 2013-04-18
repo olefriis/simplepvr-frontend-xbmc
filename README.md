@@ -29,3 +29,11 @@ Generate a ZIP file containing the plug-in and install it through XBMC's setting
 file will be placed in the "output" folder) by running this in the plugins/xbmc folder:
 
         rake package
+
+After installing the plug-in, you can edit it directly in the XBMC installation (on MacOS):
+
+        /Users/<your_user_name>/Library/Application Support/XBMC/addons/plugins.video.simplepvr/
+
+The XBMC debug log is placed here (on MacOS):
+
+        /Users/<your_user_name>/Library/Logs/XBMC.log 
