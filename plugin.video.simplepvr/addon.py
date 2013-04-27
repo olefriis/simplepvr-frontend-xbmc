@@ -1,21 +1,26 @@
 import sys
+import os
 import urllib
 import urllib2
 import urlparse
 import base64
-import re
 import simplejson
 
 import xbmcaddon
 import xbmcgui
 import xbmcplugin
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'resources/lib/'))
+from simple_pvr_client import SimplePvrClient
+
 class SimplePvrException(Exception):
     pass
 
 class SimplePvr(object):
+    def __init__(self, client):
+        self.client = client
 
-    def showOverview(self):
+    def show_overview(self):
         shows = self.get(BASE_URL + '/api/shows')
 
         for show in shows:
@@ -24,13 +29,13 @@ class SimplePvr(object):
                 'title' : show['name'],
                 'plot' : 'The plot'
             })
-            item.addContextMenuItems([('Delete', 'XBMC.RunPlugin(' + PATH + '?' + self.urlencode({ 'operation': 'deleteShow', 'showId': show['id'] }) + ')',)])
-            url = PATH + '?' + self.urlencode({ 'operation': 'showShow', 'showId': show['id'] })
+            item.addContextMenuItems([('Delete', 'XBMC.RunPlugin(' + PATH + '?' + self.url_encode({ 'operation': 'delete_show', 'show_id': show['id'] }) + ')',)])
+            url = PATH + '?' + self.url_encode({ 'operation': 'show_show', 'show_id': show['id'] })
             xbmcplugin.addDirectoryItem(HANDLE, url, item, True)
 
         xbmcplugin.endOfDirectory(HANDLE)
 
-    def urlencode(self, dictionary):
+    def url_encode(self, dictionary):
         encoded_dictionary = {}
         for k, v in dictionary.iteritems():
             if isinstance(v, unicode):
@@ -41,14 +46,14 @@ class SimplePvr(object):
             encoded_dictionary[k] = v
         return urllib.urlencode(encoded_dictionary)
 
-    def showShow(self, showId):
-        url = BASE_URL + '/api/shows/' + urllib2.quote(showId) + '/recordings'
+    def show_show(self, show_id):
+        url = BASE_URL + '/api/shows/' + urllib2.quote(show_id) + '/recordings'
         items = list()
         episodes = self.get(url)
 
         for episode in episodes:
-            episodeNumber = episode['episode']
-            item = xbmcgui.ListItem(episodeNumber)
+            episode_number = episode['episode']
+            item = xbmcgui.ListItem(episode_number)
 
             day = episode['start_time'][8:10]
             month = episode['start_time'][5:7]
@@ -65,42 +70,40 @@ class SimplePvr(object):
                 #'duration' : episode['duration'],
             }
             item.setInfo('video', infoLabels)
-            item.addContextMenuItems([('Delete', 'XBMC.RunPlugin(' + PATH + '?' + self.urlencode({ 'operation': 'deleteRecording', 'showId': showId, 'episodeNumber': episodeNumber }) + ')',)])
+            item.addContextMenuItems([('Delete', 'XBMC.RunPlugin(' + PATH + '?' + self.url_encode({ 'operation': 'delete_recording', 'show_id': show_id, 'episode_number': episode_number }) + ')',)])
 
             if SAME_MACHINE == 'true':
                 items.append((episode['local_file_url'], item, False))
             else:
-                items.append((self.videoUrl(showId, episode['episode']), item, False))
+                items.append((client.video_url(show_id, episode['episode']), item, False))
 
         xbmcplugin.addDirectoryItems(HANDLE, items)
         xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_DATE)
         xbmcplugin.endOfDirectory(HANDLE)
 
-    def deleteShow(self, showId):
-        if xbmcgui.Dialog().yesno('OK to delete?', 'Really delete all episodes of', showId, '?'):
-            url = BASE_URL + '/api/shows/' + urllib2.quote(showId)
+    def delete_show(self, show_id):
+        if xbmcgui.Dialog().yesno('OK to delete?', 'Really delete all episodes of', show_id, '?'):
+            url = BASE_URL + '/api/shows/' + urllib2.quote(show_id)
             self.delete(url)
             xbmc.executebuiltin('XBMC.Container.Refresh()')
 
-    def deleteRecording(self, showId, episodeNumber):
-        if xbmcgui.Dialog().yesno('OK to delete?', 'Really delete episode ' + episodeNumber + ' of', showId, '?'):
-            url = BASE_URL + '/api/shows/' + urllib2.quote(showId) + '/recordings/' + urllib2.quote(episodeNumber)
+    def delete_recording(self, show_id, episode_number):
+        if xbmcgui.Dialog().yesno('OK to delete?', 'Really delete episode ' + episode_number + ' of', show_id, '?'):
+            url = BASE_URL + '/api/shows/' + urllib2.quote(show_id) + '/recordings/' + urllib2.quote(episode_number)
             self.delete(url)
             xbmc.executebuiltin('XBMC.Container.Refresh()')
 
-    def showError(self, message = 'n/a'):
+    def show_error(self, message = 'n/a'):
+        sys.stdout.write(message)
         xbmcplugin.endOfDirectory(HANDLE, succeeded=False)
-
-        line1 = ADDON.getLocalizedString(30900)
-        line2 = ADDON.getLocalizedString(30901)
         xbmcgui.Dialog().ok('Something went wrong...', message)
 
-    def showMessage(self, message):
+    def show_message(self, message):
         xbmcgui.Dialog().ok('Message', 'Linje 1', 'Linje 2', message)
 
     def get(self, url):
         try:
-            request = self.createRequest(url)
+            request = self.create_request(url)
             url = urllib2.urlopen(request)
             response = url.read().decode('utf-8')
             url.close()
@@ -110,21 +113,14 @@ class SimplePvr(object):
 
     def delete(self, url):
         try:
-            request = self.createRequest(url)
+            request = self.create_request(url)
             request.get_method = lambda: 'DELETE'
             url = urllib2.urlopen(request)
             url.close()
         except Exception, ex:
             raise SimplePvrException(ex)
 
-    def videoUrl(self, show, episode):
-        base = BASE_URL
-        if USER_NAME != '':
-            matches = re.search('(https?://)(.*)', BASE_URL)
-            base = matches.group(1) + USER_NAME + ':' + PASSWORD + '@' + matches.group(2)
-        return base + '/api/shows/' + urllib2.quote(show) + '/recordings/' + episode + '/stream.ts'
-
-    def createRequest(self, url):
+    def create_request(self, url):
         return urllib2.Request(url)
 
 
@@ -133,40 +129,36 @@ if __name__ == '__main__':
     PATH = sys.argv[0]
     HANDLE = int(sys.argv[1])
     PARAMS = sys.argv[2]
-    BASE_URL = ADDON.getSetting('backend.url')
-    USER_NAME = ADDON.getSetting('backend.userName')
-    PASSWORD = ADDON.getSetting('backend.password')
     SAME_MACHINE = ADDON.getSetting('backend.sameMachine')
+    BASE_URL = ADDON.getSetting('backend.url')
+    user_name = ADDON.getSetting('backend.userName')
+    password = ADDON.getSetting('backend.password')
 
-    if USER_NAME != '':
-        password_manager = urllib2.HTTPPasswordMgrWithDefaultRealm()
-        password_manager.add_password(None, BASE_URL, USER_NAME, PASSWORD)
-        handler = urllib2.HTTPBasicAuthHandler(password_manager)
-        opener = urllib2.build_opener(handler)
-        urllib2.install_opener(opener)
+    client = SimplePvrClient(BASE_URL, user_name, password)
+    client.authenticate()
 
-    simplePvr = SimplePvr()
+    simple_pvr = SimplePvr(client)
     try:
         if PARAMS != '':
             queryString = PARAMS[1:] # remove '?'
             parameters = urlparse.parse_qs(queryString)
             operation = parameters['operation'][0]
 
-            if operation == 'showShow':
-                showId = parameters['showId'][0]
-                simplePvr.showShow(showId)
-            elif operation == 'deleteShow':
-                showId = parameters['showId'][0]
-                simplePvr.deleteShow(showId)
-            elif operation == 'deleteRecording':
-                showId = parameters['showId'][0]
-                episodeNumber = parameters['episodeNumber'][0]
-                simplePvr.deleteRecording(showId, episodeNumber)
+            if operation == 'show_show':
+                show_id = parameters['show_id'][0]
+                simple_pvr.show_show(show_id)
+            elif operation == 'delete_show':
+                show_id = parameters['show_id'][0]
+                simple_pvr.delete_show(show_id)
+            elif operation == 'delete_recording':
+                show_id = parameters['show_id'][0]
+                episode_number = parameters['episode_number'][0]
+                simple_pvr.delete_recording(show_id, episode_number)
         else:
-            simplePvr.showOverview()
+            simple_pvr.show_overview()
 
     except SimplePvrException, ex:
-        simplePvr.showError(str(ex))
+        simple_pvr.show_error(str(ex))
 
     except Exception, ex:
-        simplePvr.showError(str(ex))
+        simple_pvr.show_error(str(ex))
