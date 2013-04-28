@@ -3,25 +3,20 @@ import os
 import urllib
 import urllib2
 import urlparse
-import base64
-import simplejson
 
 import xbmcaddon
 import xbmcgui
 import xbmcplugin
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'resources/lib/'))
-from simple_pvr_client import SimplePvrClient
-
-class SimplePvrException(Exception):
-    pass
+from simple_pvr_client import SimplePvrClient, SimplePvrException
 
 class SimplePvr(object):
     def __init__(self, client):
         self.client = client
 
     def show_overview(self):
-        shows = self.get(BASE_URL + '/api/shows')
+        shows = client.shows()
 
         for show in shows:
             item = xbmcgui.ListItem(show['name'])
@@ -35,21 +30,9 @@ class SimplePvr(object):
 
         xbmcplugin.endOfDirectory(HANDLE)
 
-    def url_encode(self, dictionary):
-        encoded_dictionary = {}
-        for k, v in dictionary.iteritems():
-            if isinstance(v, unicode):
-                v = v.encode('utf8')
-            elif isinstance(v, str):
-                # Must be encoded in UTF-8
-                v.decode('utf8')
-            encoded_dictionary[k] = v
-        return urllib.urlencode(encoded_dictionary)
-
     def show_show(self, show_id):
-        url = BASE_URL + '/api/shows/' + urllib2.quote(show_id) + '/recordings'
+        episodes = client.recordings_of_show(show_id)
         items = list()
-        episodes = self.get(url)
 
         for episode in episodes:
             episode_number = episode['episode']
@@ -83,14 +66,12 @@ class SimplePvr(object):
 
     def delete_show(self, show_id):
         if xbmcgui.Dialog().yesno('OK to delete?', 'Really delete all episodes of', show_id, '?'):
-            url = BASE_URL + '/api/shows/' + urllib2.quote(show_id)
-            self.delete(url)
+            client.delete_show(show_id)
             xbmc.executebuiltin('XBMC.Container.Refresh()')
 
     def delete_recording(self, show_id, episode_number):
         if xbmcgui.Dialog().yesno('OK to delete?', 'Really delete episode ' + episode_number + ' of', show_id, '?'):
-            url = BASE_URL + '/api/shows/' + urllib2.quote(show_id) + '/recordings/' + urllib2.quote(episode_number)
-            self.delete(url)
+            client.delete_recording_of_show(show_id, episode_number)
             xbmc.executebuiltin('XBMC.Container.Refresh()')
 
     def show_error(self, message = 'n/a'):
@@ -101,28 +82,16 @@ class SimplePvr(object):
     def show_message(self, message):
         xbmcgui.Dialog().ok('Message', 'Linje 1', 'Linje 2', message)
 
-    def get(self, url):
-        try:
-            request = self.create_request(url)
-            url = urllib2.urlopen(request)
-            response = url.read().decode('utf-8')
-            url.close()
-            return simplejson.loads(response)
-        except Exception, ex:
-            raise SimplePvrException(ex)
-
-    def delete(self, url):
-        try:
-            request = self.create_request(url)
-            request.get_method = lambda: 'DELETE'
-            url = urllib2.urlopen(request)
-            url.close()
-        except Exception, ex:
-            raise SimplePvrException(ex)
-
-    def create_request(self, url):
-        return urllib2.Request(url)
-
+    def url_encode(self, dictionary):
+        encoded_dictionary = {}
+        for k, v in dictionary.iteritems():
+            if isinstance(v, unicode):
+                v = v.encode('utf8')
+            elif isinstance(v, str):
+                # Must be encoded in UTF-8
+                v.decode('utf8')
+            encoded_dictionary[k] = v
+        return urllib.urlencode(encoded_dictionary)
 
 if __name__ == '__main__':
     ADDON = xbmcaddon.Addon()
@@ -130,11 +99,11 @@ if __name__ == '__main__':
     HANDLE = int(sys.argv[1])
     PARAMS = sys.argv[2]
     SAME_MACHINE = ADDON.getSetting('backend.sameMachine')
-    BASE_URL = ADDON.getSetting('backend.url')
+    base_url = ADDON.getSetting('backend.url')
     user_name = ADDON.getSetting('backend.userName')
     password = ADDON.getSetting('backend.password')
 
-    client = SimplePvrClient(BASE_URL, user_name, password)
+    client = SimplePvrClient(base_url, user_name, password)
     client.authenticate()
 
     simple_pvr = SimplePvr(client)

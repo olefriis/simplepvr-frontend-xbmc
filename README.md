@@ -49,12 +49,11 @@ file will be placed in the "output" folder) by running this in the plugins/xbmc 
 
         rake package
 
-PLEASE NOTE: Before installing a newly generated ZIP file, be sure to clean XBMC's cache containing
-your old ZIP file:
+PLEASE NOTE: Before installing a newly generated ZIP file, be sure to shut down XBMC and clean
+XBMC's cache containing your old ZIP file (Boy, I spent a lot of time fooling around before finding
+this...):
 
 		rm -rf ~/Library/Application\ Support/XBMC/addons/packages/plugin.video.simplepvr*
-
-(Boy, I spent a lot of time fooling around before finding this...)
 
 After installing the plug-in, you can edit it directly in the XBMC installation (on MacOS):
 
