@@ -16,16 +16,13 @@ class SimplePvr(object):
         self.client = client
 
     def show_overview(self):
-        shows = client.shows()
-
-        for show in shows:
-            item = xbmcgui.ListItem(show['name'])
+        for show in client.shows():
+            item = xbmcgui.ListItem(show.name)
             item.setInfo(type = 'video', infoLabels = {
-                'title' : show['name'],
-                'plot' : 'The plot'
+                'title' : show.name
             })
-            item.addContextMenuItems([('Delete', 'XBMC.RunPlugin(' + PATH + '?' + self.url_encode({ 'operation': 'delete_show', 'show_id': show['id'] }) + ')',)])
-            url = PATH + '?' + self.url_encode({ 'operation': 'show_show', 'show_id': show['id'] })
+            item.addContextMenuItems([('Delete', 'XBMC.RunPlugin(' + PATH + '?' + self.url_encode({ 'operation': 'delete_show', 'show_id': show.id }) + ')',)])
+            url = PATH + '?' + self.url_encode({ 'operation': 'show_show', 'show_id': show.id })
             xbmcplugin.addDirectoryItem(HANDLE, url, item, True)
 
         xbmcplugin.endOfDirectory(HANDLE)

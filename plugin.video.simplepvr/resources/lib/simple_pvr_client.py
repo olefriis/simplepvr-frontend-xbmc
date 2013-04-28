@@ -2,6 +2,7 @@ import re
 import urllib
 import urllib2
 import simplejson
+import operator
 
 class SimplePvrException(Exception):
     pass
@@ -21,11 +22,16 @@ class SimplePvrClient(object):
             urllib2.install_opener(opener)
 
     def shows(self):
-        return self.get(self.base_url + '/api/shows')
+        result = []
+        shows_json = self.get_json(self.base_url + '/api/shows')
+        for show_json in shows_json:
+            result.append(SimplePvrShow(show_json['id'], show_json['name']))
+        result.sort(key=operator.attrgetter('name'))
+        return result
 
     def recordings_of_show(self, show_id):
         url = self.base_url + '/api/shows/' + urllib2.quote(show_id) + '/recordings'
-        return self.get(url)
+        return self.get_json(url)
 
     def delete_show(self, show_id):
         url = self.base_url + '/api/shows/' + urllib2.quote(show_id)
@@ -35,7 +41,6 @@ class SimplePvrClient(object):
         url = self.base_url + '/api/shows/' + urllib2.quote(show_id) + '/recordings/' + urllib2.quote(episode_number)
         self.delete(url)
 
-
     def video_url(self, show, episode):
         if self.user_name != '':
             matches = re.search('(https?://)(.*[^/])/?', self.base_url)
@@ -44,15 +49,18 @@ class SimplePvrClient(object):
             base = self.base_url
         return base + '/api/shows/' + urllib2.quote(show) + '/recordings/' + episode + '/stream.ts'
 
-    def get(self, url):
+    def get_json(self, url):
         try:
-            request = self.create_request(url)
-            url = urllib2.urlopen(request)
-            response = url.read().decode('utf-8')
-            url.close()
-            return simplejson.loads(response)
+            return simplejson.loads(self.get(url))
         except Exception, ex:
             raise SimplePvrException(ex)
+
+    def get(self, url):
+        request = self.create_request(url)
+        url = urllib2.urlopen(request)
+        response = url.read().decode('utf-8')
+        url.close()
+        return response
 
     def delete(self, url):
         try:
@@ -65,3 +73,8 @@ class SimplePvrClient(object):
 
     def create_request(self, url):
         return urllib2.Request(url)
+
+class SimplePvrShow(object):
+    def __init__(self, id, name):
+        self.id = id
+        self.name = name
