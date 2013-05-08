@@ -28,34 +28,32 @@ class SimplePvr(object):
         xbmcplugin.endOfDirectory(HANDLE)
 
     def show_show(self, show_id):
-        episodes = client.recordings_of_show(show_id)
         items = list()
 
-        for episode in episodes:
-            episode_number = episode['episode']
-            item = xbmcgui.ListItem(episode_number)
+        for recording in client.recordings_of_show(show_id):
+            item = xbmcgui.ListItem(recording.episode)
 
-            day = episode['start_time'][8:10]
-            month = episode['start_time'][5:7]
-            year = episode['start_time'][0:4]
+            day = recording.start_time[8:10]
+            month = recording.start_time[5:7]
+            year = recording.start_time[0:4]
 
             date = '%s.%s.%s' % (day, month, year)
             aired = '%s-%s-%s' % (year, month, day)
 
             infoLabels = {
-                'title' : episode['show_id'],
-                'plot' : episode['description'],
+                'title' : recording.show_id,
+                'plot' : recording.description,
                 'date' : date,
                 'aired' : aired,
-                #'duration' : episode['duration'],
+                #'duration' : recording.duration,
             }
             item.setInfo('video', infoLabels)
-            item.addContextMenuItems([('Delete', 'XBMC.RunPlugin(' + PATH + '?' + self.url_encode({ 'operation': 'delete_recording', 'show_id': show_id, 'episode_number': episode_number }) + ')',)])
+            item.addContextMenuItems([('Delete', 'XBMC.RunPlugin(' + PATH + '?' + self.url_encode({ 'operation': 'delete_recording', 'show_id': recording.show_id, 'episode_number': recording.episode }) + ')',)])
 
             if SAME_MACHINE == 'true':
-                items.append((episode['local_file_url'], item, False))
+                items.append((recording.local_file_url, item, False))
             else:
-                items.append((client.video_url(show_id, episode['episode']), item, False))
+                items.append((client.video_url(show_id, recording.episode), item, False))
 
         xbmcplugin.addDirectoryItems(HANDLE, items)
         xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_DATE)

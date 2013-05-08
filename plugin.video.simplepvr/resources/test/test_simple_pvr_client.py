@@ -19,6 +19,15 @@ class TestSimplePvrClient:
 		client = SimplePvrClient('http://my-site.com:4567/', 'Me', 'Secret')
 		assert client.video_url('Show', '23') == 'http://Me:Secret@my-site.com:4567/api/shows/Show/recordings/23/stream.ts'
 
+	def test_can_get_empty_list_of_shows(self):
+		client = SimplePvrClient('http://my-site.com:4567', '', '')
+		client.get = self.fake_get
+		self.expected_url = 'http://my-site.com:4567/api/shows'
+		self.get_response = '[]'
+
+		shows = client.shows()
+		assert len(shows) == 0
+
 	def test_can_get_list_of_shows(self):
 		client = SimplePvrClient('http://my-site.com:4567', '', '')
 		client.get = self.fake_get
@@ -29,6 +38,28 @@ class TestSimplePvrClient:
 		assert len(shows) == 3
 		assert shows[0].id == 'Blachman'
 		assert shows[0].name == 'Blachman'
+		assert shows[1].id == 'Klovn - The Movie'
+		assert shows[1].name == 'Klovn - The Movie'
+		assert shows[2].id == 'The Man Who Wasnt There'
+		assert shows[2].name == 'The Man Who Wasnt There'
+
+	def test_can_get_information_on_recordings(self):
+		client = SimplePvrClient('http://my-site.com:4567', '', '')
+		client.get = self.fake_get
+		self.expected_url = 'http://my-site.com:4567/api/shows/The%20Man%20Who%20Wasnt%20There/recordings'
+		self.get_response = """[
+			{"id":"1","show_id":"The Man Who Wasnt There","episode":"1","subtitle":"Amerikansk krimidrama fra 2001.","description":"Ed passer sin daglige dont i fris\u00f8rsalonen i 1949, hvor der stadig var sort-hvide film og livsfarlige blondiner. Da en skaldet handelsrejsende kommer forbi med en fidus, ser Ed sit livs chance. Han afpresser Big Dave, som hans kone Doris har en aff\u00e6re med. Planen ser skudsikker ud, men det eneste, der er sikkert, er, at nogen bliver skudt. Og nogen ender i stolen for mord.","start_time":"2013-04-20T21:28:00+02:00","channel_name":"DR K","has_thumbnail":false,"has_webm":false,"local_file_url":"file:///data/simplePVR/simplepvr/recordings/The Man Who Wasnt There/1/stream.ts"},
+			{"id":"2","show_id":"The Man Who Was There","episode":"2","subtitle":"Oh well...","description":"Just a 2nd recording for test purposes...","start_time":"2013-04-25T05:35:00+02:00","channel_name":"DR 1","has_thumbnail":false,"has_webm":false,"local_file_url":"file:///data/simplePVR/simplepvr/recordings/The Man Who Was There/2/stream.ts"}
+			]"""
+
+		recordings = client.recordings_of_show('The Man Who Wasnt There')
+		assert len(recordings) == 2
+		assert recordings[0].show_id == 'The Man Who Wasnt There'
+		assert recordings[0].episode == '1'
+		assert recordings[0].subtitle == 'Amerikansk krimidrama fra 2001.'
+		assert recordings[0].description.startswith(u"Ed passer sin daglige dont i fris\xf8rsalonen i 1949")
+		assert recordings[0].start_time == '2013-04-20T21:28:00+02:00'
+		assert recordings[0].local_file_url == 'file:///data/simplePVR/simplepvr/recordings/The Man Who Wasnt There/1/stream.ts'
 
 	def fake_get(self, url):
 		sys.stdout.write('URL: ' + url)

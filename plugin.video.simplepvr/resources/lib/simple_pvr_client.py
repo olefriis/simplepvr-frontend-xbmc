@@ -22,16 +22,24 @@ class SimplePvrClient(object):
             urllib2.install_opener(opener)
 
     def shows(self):
-        result = []
         shows_json = self.get_json(self.base_url + '/api/shows')
+
+        result = []
         for show_json in shows_json:
             result.append(SimplePvrShow(show_json['id'], show_json['name']))
         result.sort(key=operator.attrgetter('name'))
+
         return result
 
     def recordings_of_show(self, show_id):
-        url = self.base_url + '/api/shows/' + urllib2.quote(show_id) + '/recordings'
-        return self.get_json(url)
+        recordings_json = self.get_json(self.base_url + '/api/shows/' + urllib2.quote(show_id) + '/recordings')
+
+        result = []
+        for recording_json in recordings_json:
+            result.append(SimplePvrRecording(recording_json['show_id'], recording_json['episode'], recording_json['subtitle'],
+                recording_json['description'], recording_json['start_time'], recording_json['local_file_url']))
+
+        return result
 
     def delete_show(self, show_id):
         url = self.base_url + '/api/shows/' + urllib2.quote(show_id)
@@ -78,3 +86,12 @@ class SimplePvrShow(object):
     def __init__(self, id, name):
         self.id = id
         self.name = name
+
+class SimplePvrRecording(object):
+    def __init__(self, show_id, episode, subtitle, description, start_time, local_file_url):
+        self.show_id = show_id
+        self.episode = episode
+        self.subtitle = subtitle
+        self.description = description
+        self.start_time = start_time
+        self.local_file_url = local_file_url

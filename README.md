@@ -53,15 +53,15 @@ PLEASE NOTE: Before installing a newly generated ZIP file, be sure to shut down 
 XBMC's cache containing your old ZIP file (Boy, I spent a lot of time fooling around before finding
 this...):
 
-		rm -rf ~/Library/Application\ Support/XBMC/addons/packages/plugin.video.simplepvr*
+		rm ~/Library/Application\ Support/XBMC/addons/packages/plugin.video.simplepvr*
 
 After installing the plug-in, you can edit it directly in the XBMC installation (on MacOS):
 
-        /Users/<your_user_name>/Library/Application Support/XBMC/addons/plugin.video.simplepvr/
+        ~/Library/Application Support/XBMC/addons/plugin.video.simplepvr/
 
 The XBMC debug log is placed here (on MacOS):
 
-        /Users/<your_user_name>/Library/Logs/xbmc.log
+        ~/Library/Logs/xbmc.log
 
 TODO
 ====
