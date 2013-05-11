@@ -65,6 +65,17 @@ The XBMC debug log is placed here (on MacOS):
 
 TODO
 ====
-The code currently STINKS! It's messy and not unit tested at all. I want to change that.
+I'm a Python and XBMC newbie, so probably I'm doing lots of things wrong. I'm trying to adhere to
+[PEP 8](http://www.python.org/dev/peps/pep-0008/) and doing my best to create clean code, but
+please let me know if I got something wrong Python- and XBMC-wise.
 
-Also, using Rake for building the package probably isn't the Python way to do it...?
+Using Rake for building the package probably isn't the Python way to do it...? It just seems like
+Python has no default build tool...?
+
+The code is missing some error handling:
+
+* No contact to backend should give nice, helpful error message.
+* If backend requires HTTP Basic Auth, but plug-in is not set up for it, a nice, helpful error message should be shown.
+* If "same machine" is checked, but the local file URL is not present, a nice, helpful error message should be shown.
+
+Oh, and if you can paint a nicer SimplePVR logo, do go ahead :-)
