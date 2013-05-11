@@ -8,10 +8,12 @@ class SimplePvrException(Exception):
     pass
 
 class SimplePvrClient(object):
-    def __init__(self, base_url, user_name, password):
-        self.base_url = base_url
+    def __init__(self, base_url, user_name, password, same_machine=False):
+        base_url_matches = re.search('(https?://)(.*[^/])/?', base_url)
+        self.base_url = base_url_matches.group(1) + base_url_matches.group(2)
         self.user_name = user_name
         self.password = password
+        self.same_machine = same_machine
 
     def authenticate(self):
         if self.user_name != '':
@@ -36,8 +38,12 @@ class SimplePvrClient(object):
 
         result = []
         for recording_json in recordings_json:
+            if self.same_machine:
+                url = recording_json['local_file_url']
+            else:
+                url = self.path_to_recording(show_id, recording_json['id'])
             result.append(SimplePvrRecording(recording_json['show_id'], recording_json['episode'], recording_json['subtitle'],
-                recording_json['description'], recording_json['start_time'], recording_json['local_file_url']))
+                recording_json['description'], recording_json['start_time'], url))
 
         return result
 
@@ -49,9 +55,9 @@ class SimplePvrClient(object):
         url = self.base_url + '/api/shows/' + urllib2.quote(show_id) + '/recordings/' + urllib2.quote(episode_number)
         self.delete(url)
 
-    def video_url(self, show, episode):
+    def path_to_recording(self, show, episode):
         if self.user_name != '':
-            matches = re.search('(https?://)(.*[^/])/?', self.base_url)
+            matches = re.search('(https?://)(.*[^/])', self.base_url)
             base = matches.group(1) + self.user_name + ':' + self.password + '@' + matches.group(2)
         else:
             base = self.base_url
@@ -88,10 +94,10 @@ class SimplePvrShow(object):
         self.name = name
 
 class SimplePvrRecording(object):
-    def __init__(self, show_id, episode, subtitle, description, start_time, local_file_url):
+    def __init__(self, show_id, episode, subtitle, description, start_time, url):
         self.show_id = show_id
         self.episode = episode
         self.subtitle = subtitle
         self.description = description
         self.start_time = start_time
-        self.local_file_url = local_file_url
+        self.url = url

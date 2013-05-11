@@ -37,23 +37,16 @@ class SimplePvr(object):
             month = recording.start_time[5:7]
             year = recording.start_time[0:4]
 
-            date = '%s.%s.%s' % (day, month, year)
-            aired = '%s-%s-%s' % (year, month, day)
-
             infoLabels = {
                 'title' : recording.show_id,
                 'plot' : recording.description,
-                'date' : date,
-                'aired' : aired,
+                'date' : '%s.%s.%s' % (day, month, year),
                 #'duration' : recording.duration,
             }
             item.setInfo('video', infoLabels)
             item.addContextMenuItems([('Delete', 'XBMC.RunPlugin(' + PATH + '?' + self.url_encode({ 'operation': 'delete_recording', 'show_id': recording.show_id, 'episode_number': recording.episode }) + ')',)])
 
-            if SAME_MACHINE == 'true':
-                items.append((recording.local_file_url, item, False))
-            else:
-                items.append((client.video_url(show_id, recording.episode), item, False))
+            items.append((recording.url, item, False))
 
         xbmcplugin.addDirectoryItems(HANDLE, items)
         xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_DATE)
@@ -74,9 +67,6 @@ class SimplePvr(object):
         xbmcplugin.endOfDirectory(HANDLE, succeeded=False)
         xbmcgui.Dialog().ok('Something went wrong...', message)
 
-    def show_message(self, message):
-        xbmcgui.Dialog().ok('Message', 'Linje 1', 'Linje 2', message)
-
     def url_encode(self, dictionary):
         encoded_dictionary = {}
         for k, v in dictionary.iteritems():
@@ -93,12 +83,12 @@ if __name__ == '__main__':
     PATH = sys.argv[0]
     HANDLE = int(sys.argv[1])
     PARAMS = sys.argv[2]
-    SAME_MACHINE = ADDON.getSetting('backend.sameMachine')
+    same_machine = ADDON.getSetting('backend.sameMachine') == 'true'
     base_url = ADDON.getSetting('backend.url')
     user_name = ADDON.getSetting('backend.userName')
     password = ADDON.getSetting('backend.password')
 
-    client = SimplePvrClient(base_url, user_name, password)
+    client = SimplePvrClient(base_url, user_name, password, same_machine)
     client.authenticate()
 
     simple_pvr = SimplePvr(client)
