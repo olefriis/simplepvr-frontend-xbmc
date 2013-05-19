@@ -9,7 +9,7 @@ import xbmcgui
 import xbmcplugin
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'resources/lib/'))
-from simple_pvr_client import SimplePvrClient, SimplePvrException
+from simple_pvr_client import *
 
 class SimplePvr(object):
     def __init__(self, client):
@@ -111,8 +111,11 @@ if __name__ == '__main__':
         else:
             simple_pvr.show_overview()
 
-    except SimplePvrException, ex:
-        simple_pvr.show_error(str(ex))
+    except SimplePvrNoConnectionToHostException, ex:
+        simple_pvr.show_error('No contact to server\nCheck your settings and network')
+
+    except SimplePvrAuthenticationException, ex:
+        simple_pvr.show_error('Wrong username and/or password\nCheck your settings')
 
     except Exception, ex:
         simple_pvr.show_error(str(ex))

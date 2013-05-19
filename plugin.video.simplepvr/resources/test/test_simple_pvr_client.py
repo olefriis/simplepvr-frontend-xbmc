@@ -1,8 +1,36 @@
 import sys, os
+import pytest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../lib/'))
-from simple_pvr_client import SimplePvrClient
+from simple_pvr_client import *
 
 class TestSimplePvrClient:
+	def test_gives_exception_when_no_connection_to_host(self):
+		client = SimplePvrClient('http://localhost:12345678', '', '')
+		
+		with pytest.raises(SimplePvrNoConnectionToHostException):
+			client.shows()
+
+	def test_gives_exception_when_host_requires_authentication(self):
+		client = SimplePvrClient('http://my-server-requiring-authentication.com:4567', '', '')
+		urlopen = urllib2.urlopen
+		urllib2.urlopen = self.fake_urlopen_requiring_authentication
+		
+		with pytest.raises(SimplePvrAuthenticationException):
+			client.shows()
+
+		urllib2.urlopen = urlopen
+
+	def test_gives_exception_when_wrong_authentication(self):
+		client = SimplePvrClient('http://my-server-requiring-authentication.com:4567', 'olefriis', 'wrong')
+		client.authenticate()
+		urlopen = urllib2.urlopen
+		urllib2.urlopen = self.fake_urlopen_requiring_authentication
+		
+		with pytest.raises(SimplePvrAuthenticationException):
+			client.shows()
+
+		urllib2.urlopen = urlopen
+
 	def test_can_get_empty_list_of_shows(self):
 		client = SimplePvrClient('http://my-site.com:4567', '', '')
 		client.get = self.fake_get
@@ -98,6 +126,9 @@ class TestSimplePvrClient:
 
 		recordings = client.recordings_of_show('The Man Who Wasnt There')
 		assert recordings[0].url == 'http://Me:Secret@my-site.com:4567/api/shows/The%20Man%20Who%20Wasnt%20There/recordings/4/stream.ts'
+
+	def fake_urlopen_requiring_authentication(self, request):
+		raise urllib2.HTTPError(code=401, msg='A test exception', url=None, hdrs=None, fp=None)
 
 	def fake_get(self, url):
 		sys.stdout.write('URL: ' + url)

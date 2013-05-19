@@ -7,6 +7,12 @@ import operator
 class SimplePvrException(Exception):
     pass
 
+class SimplePvrNoConnectionToHostException(SimplePvrException):
+    pass
+
+class SimplePvrAuthenticationException(SimplePvrException):
+    pass
+
 class SimplePvrClient(object):
     def __init__(self, base_url, user_name, password, same_machine=False):
         base_url_matches = re.search('(https?://)(.*[^/])/?', base_url)
@@ -64,14 +70,19 @@ class SimplePvrClient(object):
         return base + '/api/shows/' + urllib2.quote(show) + '/recordings/' + episode + '/stream.ts'
 
     def get_json(self, url):
-        try:
-            return simplejson.loads(self.get(url))
-        except Exception, ex:
-            raise SimplePvrException(ex)
+        return simplejson.loads(self.get(url))
 
     def get(self, url):
         request = self.create_request(url)
-        url = urllib2.urlopen(request)
+        try:
+            url = urllib2.urlopen(request)
+        except urllib2.HTTPError, ex:
+            if ex.code == 401:
+                raise SimplePvrAuthenticationException(ex)
+            else:
+                raise SimplePvrNoConnectionToHostException(ex)
+        except urllib2.URLError, ex:
+            raise SimplePvrNoConnectionToHostException(ex)
         response = url.read().decode('utf-8')
         url.close()
         return response

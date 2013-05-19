@@ -74,8 +74,12 @@ Python has no default build tool...?
 
 The code is missing some error handling:
 
-* No contact to backend should give nice, helpful error message.
-* If backend requires HTTP Basic Auth, but plug-in is not set up for it, a nice, helpful error message should be shown.
-* If "same machine" is checked, but the local file URL is not present, a nice, helpful error message should be shown.
+* If "same machine" is checked, but the local file URL is not present, a nice, helpful error message
+  would be nice.
+
+Also, there seems to be a bug:
+
+* If you have set up a wrong username and password, XBMC simply crashes. SimplePvrClient ought to
+  handle it quite nicely (it's tested and all), and the XBMC log gives nothing.
 
 Oh, and if you can paint a nicer SimplePVR logo, do go ahead :-)
