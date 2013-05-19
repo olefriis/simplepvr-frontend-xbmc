@@ -1,2 +1,6 @@
-[B]Version 1.0.0[/B]
+[B]Version 0.0.1[/B]
 - Initial version
+
+[B]Version 0.0.2[/B]
+- Much better code structure
+- Nicer error handling
