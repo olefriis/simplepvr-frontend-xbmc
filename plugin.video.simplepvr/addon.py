@@ -31,11 +31,13 @@ class SimplePvr(object):
         items = list()
 
         for recording in client.recordings_of_show(show_id):
-            item = xbmcgui.ListItem(recording.episode)
+            item = xbmcgui.ListItem(recording.id)
 
             day = recording.start_time[8:10]
             month = recording.start_time[5:7]
             year = recording.start_time[0:4]
+            if (recording.icon_url != None):
+                item.setThumbnailImage(recording.icon_url)
 
             infoLabels = {
                 'title' : recording.show_id,
@@ -44,7 +46,7 @@ class SimplePvr(object):
                 #'duration' : recording.duration,
             }
             item.setInfo('video', infoLabels)
-            item.addContextMenuItems([('Delete', 'XBMC.RunPlugin(' + PATH + '?' + self.url_encode({ 'operation': 'delete_recording', 'show_id': recording.show_id, 'episode_number': recording.episode }) + ')',)])
+            item.addContextMenuItems([('Delete', 'XBMC.RunPlugin(' + PATH + '?' + self.url_encode({ 'operation': 'delete_recording', 'show_id': recording.show_id, 'recording_id': recording.id }) + ')',)])
 
             items.append((recording.url, item, False))
 
@@ -57,9 +59,9 @@ class SimplePvr(object):
             client.delete_show(show_id)
             xbmc.executebuiltin('XBMC.Container.Refresh()')
 
-    def delete_recording(self, show_id, episode_number):
-        if xbmcgui.Dialog().yesno('OK to delete?', 'Really delete episode ' + episode_number + ' of', show_id, '?'):
-            client.delete_recording_of_show(show_id, episode_number)
+    def delete_recording(self, show_id, recording_id):
+        if xbmcgui.Dialog().yesno('OK to delete?', 'Really delete episode  of', show_id, '?'):
+            client.delete_recording_of_show(show_id, recording_id)
             xbmc.executebuiltin('XBMC.Container.Refresh()')
 
     def show_error(self, message = 'n/a'):
@@ -106,8 +108,8 @@ if __name__ == '__main__':
                 simple_pvr.delete_show(show_id)
             elif operation == 'delete_recording':
                 show_id = parameters['show_id'][0]
-                episode_number = parameters['episode_number'][0]
-                simple_pvr.delete_recording(show_id, episode_number)
+                recording_id = parameters['recording_id'][0]
+                simple_pvr.delete_recording(show_id, recording_id)
         else:
             simple_pvr.show_overview()
 

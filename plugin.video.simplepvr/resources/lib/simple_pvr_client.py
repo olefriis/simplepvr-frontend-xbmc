@@ -47,9 +47,15 @@ class SimplePvrClient(object):
             if self.same_machine:
                 url = recording_json['local_file_url']
             else:
-                url = self.path_to_recording(show_id, recording_json['id'])
-            result.append(SimplePvrRecording(recording_json['show_id'], recording_json['episode'], recording_json['subtitle'],
-                recording_json['description'], recording_json['start_time'], url))
+                url = self.path_to_recording_stream(show_id, recording_json['id'])
+
+            if recording_json['has_icon']:
+                icon_url = self.path_to_recording_icon(show_id, recording_json['id'])
+            else:
+                icon_url = None
+            
+            result.append(SimplePvrRecording(recording_json['id'], recording_json['show_id'], recording_json['subtitle'],
+                recording_json['description'], recording_json['start_time'], url, icon_url))
 
         return result
 
@@ -57,17 +63,23 @@ class SimplePvrClient(object):
         url = self.base_url + '/api/shows/' + urllib2.quote(show_id)
         self.delete(url)
 
-    def delete_recording_of_show(self, show_id, episode_number):
-        url = self.base_url + '/api/shows/' + urllib2.quote(show_id) + '/recordings/' + urllib2.quote(episode_number)
+    def delete_recording_of_show(self, show_id, recording_id):
+        url = self.base_url + '/api/shows/' + urllib2.quote(show_id) + '/recordings/' + urllib2.quote(recording_id)
         self.delete(url)
 
-    def path_to_recording(self, show, episode):
+    def path_to_recording_stream(self, show_id, recording_id):
+        return self.path_to_recording(show_id, recording_id) + '/stream.ts'
+
+    def path_to_recording_icon(self, show_id, recording_id):
+        return self.path_to_recording(show_id, recording_id) + '/icon'
+
+    def path_to_recording(self, show_id, recording_id):
         if self.user_name != '':
             matches = re.search('(https?://)(.*[^/])', self.base_url)
             base = matches.group(1) + self.user_name + ':' + self.password + '@' + matches.group(2)
         else:
             base = self.base_url
-        return base + '/api/shows/' + urllib2.quote(show) + '/recordings/' + episode + '/stream.ts'
+        return base + '/api/shows/' + urllib2.quote(show_id) + '/recordings/' + recording_id
 
     def get_json(self, url):
         return simplejson.loads(self.get(url))
@@ -105,10 +117,11 @@ class SimplePvrShow(object):
         self.name = name
 
 class SimplePvrRecording(object):
-    def __init__(self, show_id, episode, subtitle, description, start_time, url):
+    def __init__(self, id, show_id, subtitle, description, start_time, url, icon_url):
+        self.id = id
         self.show_id = show_id
-        self.episode = episode
         self.subtitle = subtitle
         self.description = description
         self.start_time = start_time
         self.url = url
+        self.icon_url = icon_url
