@@ -44,8 +44,14 @@ Before running the tests, you need to install pytest and simplejson:
         sudo easy_install -U pytest
         sudo easy_install simplejson
 
+Then simply run the tests by issuing
+
+        py.test
+
+from the command-line.
+
 Generate a ZIP file containing the plug-in and install it through XBMC's settings page (the ZIP
-file will be placed in the "output" folder) by running this in the plugins/xbmc folder:
+file will be placed in the "output" folder) by running this:
 
         rake package
 

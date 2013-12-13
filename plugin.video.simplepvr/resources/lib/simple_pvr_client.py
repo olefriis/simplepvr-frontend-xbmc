@@ -49,7 +49,7 @@ class SimplePvrClient(object):
             else:
                 url = self.path_to_recording_stream(show_id, recording_json['id'])
 
-            if recording_json['has_icon']:
+            if 'has_icon' in recording_json and recording_json['has_icon']:
                 icon_url = self.path_to_recording_icon(show_id, recording_json['id'])
             else:
                 icon_url = None

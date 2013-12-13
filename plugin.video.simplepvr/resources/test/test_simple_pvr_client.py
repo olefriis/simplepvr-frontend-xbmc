@@ -73,6 +73,19 @@ class TestSimplePvrClient:
 		assert recordings[0].start_time == '2013-04-20T21:28:00+02:00'
 		assert recordings[0].icon_url == None
 
+	def test_handles_missing_icon_information_from_server(self):
+		client = SimplePvrClient('http://my-site.com:4567', '', '')
+		client.get = self.fake_get
+		self.expected_url = 'http://my-site.com:4567/api/shows/The%20Man%20Who%20Wasnt%20There/recordings'
+		self.get_response = """[
+			{"id":"1","show_id":"The Man Who Wasnt There","subtitle":"Amerikansk krimidrama fra 2001.","description":"Ed passer sin daglige dont i fris\u00f8rsalonen i 1949, hvor der stadig var sort-hvide film og livsfarlige blondiner. Da en skaldet handelsrejsende kommer forbi med en fidus, ser Ed sit livs chance. Han afpresser Big Dave, som hans kone Doris har en aff\u00e6re med. Planen ser skudsikker ud, men det eneste, der er sikkert, er, at nogen bliver skudt. Og nogen ender i stolen for mord.","start_time":"2013-04-20T21:28:00+02:00","channel_name":"DR K","has_thumbnail":false,"has_webm":false,"local_file_url":"file:///data/simplePVR/simplepvr/recordings/The Man Who Wasnt There/1/stream.ts"}
+			]"""
+
+		recordings = client.recordings_of_show('The Man Who Wasnt There')
+		assert len(recordings) == 1
+		assert recordings[0].id == '1'
+		assert recordings[0].icon_url == None
+
 	def test_knows_when_recording_has_icon(self):
 		client = SimplePvrClient('http://my-site.com:4567', '', '')
 		client.get = self.fake_get
