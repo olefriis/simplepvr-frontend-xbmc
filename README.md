@@ -69,6 +69,14 @@ The XBMC debug log is placed here (on MacOS):
 
         ~/Library/Logs/xbmc.log
 
+Release
+=======
+Remember to bump version number in `addon.xml` file, `Rakefile`, and make sure that the information
+in `changelog.txt` is correct.
+
+I haven't released "for real" yet (so that people can just install the plug-in directly from XBMC),
+so a description of that is missing for now.
+
 TODO
 ====
 I'm a Python and XBMC newbie, so probably I'm doing lots of things wrong. I'm trying to adhere to

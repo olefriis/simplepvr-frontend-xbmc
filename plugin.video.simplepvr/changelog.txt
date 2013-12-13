@@ -4,3 +4,6 @@
 [B]Version 0.0.2[/B]
 - Much better code structure
 - Nicer error handling
+
+[B]Version 0.0.3[/B]
+- Shows thumbnails, for back-ends supporting that
